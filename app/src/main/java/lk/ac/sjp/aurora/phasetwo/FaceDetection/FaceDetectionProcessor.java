@@ -13,6 +13,7 @@
 // limitations under the License.
 package lk.ac.sjp.aurora.phasetwo.FaceDetection;
 
+import android.app.Activity;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -26,6 +27,7 @@ import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions;
 import java.io.IOException;
 import java.util.List;
 
+import lk.ac.sjp.aurora.phasetwo.Dialogs.TeamRecognizedDialog;
 import lk.ac.sjp.aurora.phasetwo.FrameMetadata;
 import lk.ac.sjp.aurora.phasetwo.GraphicOverlay;
 import lk.ac.sjp.aurora.phasetwo.VisionProcessorBase;
@@ -36,10 +38,12 @@ import lk.ac.sjp.aurora.phasetwo.VisionProcessorBase;
 public class FaceDetectionProcessor extends VisionProcessorBase<List<FirebaseVisionFace>> {
 
     private static final String TAG = "FaceDetectionProcessor";
-
+    private Activity activity;
     private final FirebaseVisionFaceDetector detector;
 
-    public FaceDetectionProcessor() {
+    public FaceDetectionProcessor(Activity activity) {
+        this.activity = activity;
+        Log.i(TAG, "FACE DETECTION PROCESSOR CONSTRUCTED");
         FirebaseVisionFaceDetectorOptions options =
                 new FirebaseVisionFaceDetectorOptions.Builder()
                         .setClassificationType(FirebaseVisionFaceDetectorOptions.ALL_CLASSIFICATIONS)
@@ -73,6 +77,15 @@ public class FaceDetectionProcessor extends VisionProcessorBase<List<FirebaseVis
             graphicOverlay.add(faceGraphic);
             faceGraphic.updateFace(face, frameMetadata.getCameraFacing());
         }
+        if (faces.size() != 0) {
+            FirebaseVisionFace firebaseVisionFace = faces.get(0);
+            TeamRecognizedDialog teamRecognizedDialog = new TeamRecognizedDialog();
+            teamRecognizedDialog.setMessage("Are you from Team A?");
+            teamRecognizedDialog.setActivity(activity);
+            teamRecognizedDialog.show(activity.getFragmentManager(), "Team Recognizer");
+
+        }
+
     }
 
 /*  @Override

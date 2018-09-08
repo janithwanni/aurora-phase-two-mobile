@@ -21,7 +21,7 @@ public class CameraPreview extends ViewGroup {
     private boolean startRequested;
     private boolean surfaceAvailable;
     private CameraSource cameraSource;
-
+    private GraphicOverlay overlay;
 
     public CameraPreview(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -45,6 +45,11 @@ public class CameraPreview extends ViewGroup {
             startRequested = true;
             startIfReady();
         }
+    }
+
+    public void start(CameraSource cameraSource, GraphicOverlay overlay) throws IOException {
+        this.overlay = overlay;
+        start(cameraSource);
     }
 
     public void stop() {

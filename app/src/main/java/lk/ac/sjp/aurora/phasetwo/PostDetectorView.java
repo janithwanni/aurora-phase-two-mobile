@@ -18,13 +18,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import lk.ac.sjp.aurora.phasetwo.FaceDetection.FaceDetectionProcessor;
-
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class MainView extends AppCompatActivity {
+public class PostDetectorView extends AppCompatActivity {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -172,7 +170,7 @@ public class MainView extends AppCompatActivity {
             cameraSource = new CameraSource(this, graphicOverlay);
         }
         Log.i(TAG, "Using Face Detector Processor");
-        cameraSource.setMachineLearningFrameProcessor(new FaceDetectionProcessor(this));
+        //cameraSource.setMachineLearningFrameProcessor(new FaceDetectionProcessor());
     }
 
     private void startCameraSource() {
