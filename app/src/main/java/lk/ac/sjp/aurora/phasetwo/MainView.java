@@ -1,12 +1,23 @@
 package lk.ac.sjp.aurora.phasetwo;
 
 import android.annotation.SuppressLint;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lk.ac.sjp.aurora.phasetwo.FaceDetection.FaceDetectionProcessor;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -32,6 +43,11 @@ public class MainView extends AppCompatActivity {
     private static final int UI_ANIMATION_DELAY = 300;
     private final Handler mHideHandler = new Handler();
     private View mContentView;
+    private static final String TAG = "LivePreviewActivity";
+    private CameraSource cameraSource = null;
+    private CameraPreview preview;
+    private GraphicOverlay graphicOverlay;
+    private static final int PERMISSION_REQUESTS = 1;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -91,8 +107,22 @@ public class MainView extends AppCompatActivity {
 
         setContentView(R.layout.activity_main_view);
 
+        preview = (CameraPreview) findViewById(R.id.fullscreen_content);
+        if (preview == null) {
+            Log.d(TAG, "Preview is null");
+        }
+        graphicOverlay = (GraphicOverlay) findViewById(R.id.graphicOverlay);
+        if (graphicOverlay == null) {
+            Log.d(TAG, "graphicOverlay is null");
+        }
+
+        if (allPermissionsGranted()) {
+            createCameraSource("FACE_DETECTION");
+        } else {
+            getRuntimePermissions();
+        }
         mVisible = true;
-        mControlsView = findViewById(R.id.fullscreen_content_controls);
+        //mControlsView = findViewById(R.id.fullscreen_content_controls);
         mContentView = findViewById(R.id.fullscreen_content);
 
         View decorView = getWindow().getDecorView();
@@ -128,7 +158,75 @@ public class MainView extends AppCompatActivity {
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        //findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+    }
+
+    private void createCameraSource(String model) {
+        // If there's no existing cameraSource, create one.
+        if (cameraSource == null) {
+            cameraSource = new CameraSource(this, graphicOverlay);
+        }
+        Log.i(TAG, "Using Face Detector Processor");
+        cameraSource.setMachineLearningFrameProcessor(new FaceDetectionProcessor());
+    }
+
+    private boolean allPermissionsGranted() {
+        for (String permission : getRequiredPermissions()) {
+            if (!isPermissionGranted(this, permission)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void getRuntimePermissions() {
+        List<String> allNeededPermissions = new ArrayList<>();
+        for (String permission : getRequiredPermissions()) {
+            if (!isPermissionGranted(this, permission)) {
+                allNeededPermissions.add(permission);
+            }
+        }
+
+        if (!allNeededPermissions.isEmpty()) {
+            ActivityCompat.requestPermissions(
+                    this, allNeededPermissions.toArray(new String[0]), PERMISSION_REQUESTS);
+        }
+    }
+
+    private String[] getRequiredPermissions() {
+        try {
+            PackageInfo info =
+                    this.getPackageManager()
+                            .getPackageInfo(this.getPackageName(), PackageManager.GET_PERMISSIONS);
+            String[] ps = info.requestedPermissions;
+            if (ps != null && ps.length > 0) {
+                return ps;
+            } else {
+                return new String[0];
+            }
+        } catch (Exception e) {
+            return new String[0];
+        }
+    }
+
+    private static boolean isPermissionGranted(Context context, String permission) {
+        if (ContextCompat.checkSelfPermission(context, permission)
+                == PackageManager.PERMISSION_GRANTED) {
+            Log.i(TAG, "Permission granted: " + permission);
+            return true;
+        }
+        Log.i(TAG, "Permission NOT granted: " + permission);
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(
+            int requestCode, String[] permissions, int[] grantResults) {
+        Log.i(TAG, "Permission granted!");
+        if (allPermissionsGranted()) {
+            createCameraSource("FACE_DETECTION");
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     @Override
@@ -155,7 +253,7 @@ public class MainView extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }
-        mControlsView.setVisibility(View.GONE);
+        //mControlsView.setVisibility(View.GONE);
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
