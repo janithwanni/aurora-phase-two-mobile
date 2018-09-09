@@ -1,28 +1,19 @@
 package lk.ac.sjp.aurora.phasetwo;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class PostDetectorView extends AppCompatActivity {
+public class AnswerInputView extends AppCompatActivity {
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -43,9 +34,9 @@ public class PostDetectorView extends AppCompatActivity {
     private final Handler mHideHandler = new Handler();
     private View mContentView;
     private static final String TAG = "LivePreviewActivity";
-    private CameraSource cameraSource = null;
+    /*private CameraSource cameraSource = null;
     private CameraPreview preview;
-    private GraphicOverlay graphicOverlay;
+    private GraphicOverlay graphicOverlay;*/
     private static final int PERMISSION_REQUESTS = 1;
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -104,27 +95,11 @@ public class PostDetectorView extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main_view);
+        setContentView(R.layout.activity_answer_input_view);
 
-        preview = (CameraPreview) findViewById(R.id.fullscreen_content);
-        if (preview == null) {
-            Log.d(TAG, "Preview is null");
-        }
-        graphicOverlay = (GraphicOverlay) findViewById(R.id.graphicOverlay);
-        if (graphicOverlay == null) {
-            Log.d(TAG, "graphicOverlay is null");
-        }
-
-        if (allPermissionsGranted()) {
-            createCameraSource("FACE_DETECTION");
-            cameraSource.setFacing(CameraSource.CAMERA_FACING_FRONT);
-            startCameraSource();
-        } else {
-            getRuntimePermissions();
-        }
         mVisible = true;
         //mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = preview;
+        mContentView = findViewById(R.id.textView); //TODO: FIX THIS
 
         View decorView = getWindow().getDecorView();
         decorView.setOnSystemUiVisibilityChangeListener
@@ -164,7 +139,64 @@ public class PostDetectorView extends AppCompatActivity {
         //findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
     }
 
-    private void createCameraSource(String model) {
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+    private void hide() {
+        // Hide UI first
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+        //mControlsView.setVisibility(View.GONE);
+        mVisible = false;
+
+        // Schedule a runnable to remove the status and navigation bar after a delay
+        mHideHandler.removeCallbacks(mShowPart2Runnable);
+        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
+    }
+
+    @SuppressLint("InlinedApi")
+    private void show() {
+        // Show the system bar
+        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        mVisible = true;
+
+        // Schedule a runnable to display UI elements after a delay
+        mHideHandler.removeCallbacks(mHidePart2Runnable);
+        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
+    }
+
+    /**
+     * Schedules a call to hide() in delay milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+}
+
+/*COMMENTED OUT CODE */
+
+
+    /*private void toggle() {
+        if (mVisible) {
+            hide();
+        } else {
+            show();
+        }
+    }*/
+
+    /*private void createCameraSource(String model) {
         // If there's no existing cameraSource, create one.
         if (cameraSource == null) {
             cameraSource = new CameraSource(this, graphicOverlay);
@@ -189,8 +221,8 @@ public class PostDetectorView extends AppCompatActivity {
                 cameraSource = null;
             }
         }
-    }
-
+    }*/
+/*
     private boolean allPermissionsGranted() {
         for (String permission : getRequiredPermissions()) {
             if (!isPermissionGranted(this, permission)) {
@@ -238,9 +270,9 @@ public class PostDetectorView extends AppCompatActivity {
         }
         Log.i(TAG, "Permission NOT granted: " + permission);
         return false;
-    }
+    }*/
 
-    @Override
+    /*@Override
     public void onRequestPermissionsResult(
             int requestCode, String[] permissions, int[] grantResults) {
         Log.i(TAG, "Permission granted!");
@@ -248,58 +280,21 @@ public class PostDetectorView extends AppCompatActivity {
             createCameraSource("FACE_DETECTION");
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
-    }
-
-    /*private void toggle() {
-        if (mVisible) {
-            hide();
-        } else {
-            show();
-        }
     }*/
-
-    private void hide() {
-        // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
+    /*
+        preview = (CameraPreview) findViewById(R.id.fullscreen_content);
+        if (preview == null) {
+            Log.d(TAG, "Preview is null");
         }
-        //mControlsView.setVisibility(View.GONE);
-        mVisible = false;
+        graphicOverlay = (GraphicOverlay) findViewById(R.id.graphicOverlay);
+        if (graphicOverlay == null) {
+            Log.d(TAG, "graphicOverlay is null");
+        }
 
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    @SuppressLint("InlinedApi")
-    private void show() {
-        // Show the system bar
-        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        mVisible = true;
-
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    /**
-     * Schedules a call to hide() in delay milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }
-}
+        if (allPermissionsGranted()) {
+            createCameraSource("FACE_DETECTION");
+            cameraSource.setFacing(CameraSource.CAMERA_FACING_FRONT);
+            startCameraSource();
+        } else {
+            getRuntimePermissions();
+        }*/

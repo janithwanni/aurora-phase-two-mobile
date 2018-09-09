@@ -30,6 +30,7 @@ import java.util.List;
 import lk.ac.sjp.aurora.phasetwo.Dialogs.TeamRecognizedDialog;
 import lk.ac.sjp.aurora.phasetwo.FrameMetadata;
 import lk.ac.sjp.aurora.phasetwo.GraphicOverlay;
+import lk.ac.sjp.aurora.phasetwo.StateManager;
 import lk.ac.sjp.aurora.phasetwo.VisionProcessorBase;
 
 /**
@@ -79,11 +80,12 @@ public class FaceDetectionProcessor extends VisionProcessorBase<List<FirebaseVis
         }
         if (faces.size() != 0) {
             FirebaseVisionFace firebaseVisionFace = faces.get(0);
-            TeamRecognizedDialog teamRecognizedDialog = new TeamRecognizedDialog();
-            teamRecognizedDialog.setMessage("Are you from Team A?");
-            teamRecognizedDialog.setActivity(activity);
-            teamRecognizedDialog.show(activity.getFragmentManager(), "Team Recognizer");
-
+            if (!StateManager.isTeamRegistered()) {
+                TeamRecognizedDialog teamRecognizedDialog = new TeamRecognizedDialog();
+                teamRecognizedDialog.setMessage("Are you from Team A?");
+                teamRecognizedDialog.setActivity(activity);
+                teamRecognizedDialog.show(activity.getFragmentManager(), "Team Recognizer");
+            }
         }
 
     }

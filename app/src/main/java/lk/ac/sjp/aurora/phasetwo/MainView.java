@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lk.ac.sjp.aurora.phasetwo.FaceDetection.FaceDetectionProcessor;
+import lk.ac.sjp.aurora.phasetwo.ImageClassification.ImageLabelingProcessor;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -49,6 +50,8 @@ public class MainView extends AppCompatActivity {
     private CameraPreview preview;
     private GraphicOverlay graphicOverlay;
     private static final int PERMISSION_REQUESTS = 1;
+    private String model = "FACE_DETECTION";
+
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -67,19 +70,10 @@ public class MainView extends AppCompatActivity {
                             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
         }
     };
-    private View mControlsView;
-    private final Runnable mShowPart2Runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
-            }
-            //mControlsView.setVisibility(View.VISIBLE);
-        }
-    };
+
+    //private View mControlsView;
     private boolean mVisible;
+
     private final Runnable mHideRunnable = new Runnable() {
         @Override
         public void run() {
@@ -117,13 +111,6 @@ public class MainView extends AppCompatActivity {
             Log.d(TAG, "graphicOverlay is null");
         }
 
-        if (allPermissionsGranted()) {
-            createCameraSource("FACE_DETECTION");
-            cameraSource.setFacing(CameraSource.CAMERA_FACING_FRONT);
-            startCameraSource();
-        } else {
-            getRuntimePermissions();
-        }
         mVisible = true;
         //mControlsView = findViewById(R.id.fullscreen_content_controls);
         mContentView = preview;
@@ -136,15 +123,11 @@ public class MainView extends AppCompatActivity {
                         // Note that system bars will only be "visible" if none of the
                         // LOW_PROFILE, HIDE_NAVIGATION, or FULLSCREEN flags are set.
                         if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
-                            // TODO: The system bars are visible. Make any desired
-                            // adjustments to your UI, such as showing the action bar or
-                            // other navigational controls.
+
                             Log.i(TAG, "THE SYSTEM BARS ARE VISIBLE");
-                            show();
+                            hide();
                         } else {
-                            // TODO: The system bars are NOT visible. Make any desired
-                            // adjustments to your UI, such as hiding the action bar or
-                            // other navigational controls.
+
                             hide();
                             Log.i(TAG, "THE SYSTEM BARS ARE NOT VISIBLE");
                         }
@@ -158,8 +141,80 @@ public class MainView extends AppCompatActivity {
                 hide();
             }
         });
+        if (savedInstanceState == null) {
+            /* DECISION LOGIC OF AI MODEL AND ACTIVITY */
+            if (allPermissionsGranted()) {
+                int cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                if (StateManager.isTeamRegistered()) {
+                    if (StateManager.allScanned()) {
+                        /*TODO: Add the intent to open up the final answer activity*/
+                    } else {
+                        model = "IMAGE_CLASSIFICATION";
+                        cameraFaceDir = CameraSource.CAMERA_FACING_BACK;
+                    }
+                } else {
+                    model = "FACE_DETECTION";
+                    cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                }
+                createCameraSource(model);
+                cameraSource.setFacing(cameraFaceDir);
+                startCameraSource();
+
+            } else {
+                getRuntimePermissions();
+            }
+            /* DECISION LOGIC OF AI MODEL AND ACTIVITY */
+            if (allPermissionsGranted()) {
+                String model = "";
+                int cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                if (StateManager.isTeamRegistered()) {
+                    if (StateManager.allScanned()) {
+                        /*TODO: Add the intent to open up the final answer activity*/
+                    } else {
+                        model = "IMAGE_CLASSIFICATION";
+                        cameraFaceDir = CameraSource.CAMERA_FACING_BACK;
+                    }
+                } else {
+                    model = "FACE_DETECTION";
+                    cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                }
+                createCameraSource(model);
+                cameraSource.setFacing(cameraFaceDir);
+                startCameraSource();
+
+            } else {
+                getRuntimePermissions();
+            }
+            /*DECISION LOGIC END*/
+        } else {
+            /* DECISION LOGIC OF AI MODEL AND ACTIVITY */
+            if (allPermissionsGranted()) {
+                String model = "";
+                int cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                if (StateManager.isTeamRegistered()) {
+                    if (StateManager.allScanned()) {
+                        /*TODO: Add the intent to open up the final answer activity*/
+                    } else {
+                        model = "IMAGE_CLASSIFICATION";
+                        cameraFaceDir = CameraSource.CAMERA_FACING_BACK;
+                        createCameraSource(model);
+                        cameraSource.setFacing(cameraFaceDir);
+                        startCameraSource();
+                    }
+                } else {
+                    model = "FACE_DETECTION";
+                    cameraFaceDir = CameraSource.CAMERA_FACING_FRONT;
+                    createCameraSource(model);
+                    cameraSource.setFacing(cameraFaceDir);
+                    startCameraSource();
+                }
 
 
+            } else {
+                getRuntimePermissions();
+            }
+            /*DECISION LOGIC END*/
+        }
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
@@ -172,7 +227,12 @@ public class MainView extends AppCompatActivity {
             cameraSource = new CameraSource(this, graphicOverlay);
         }
         Log.i(TAG, "Using Face Detector Processor");
-        cameraSource.setMachineLearningFrameProcessor(new FaceDetectionProcessor(this));
+        if (model.equals("FACE_DETECTION")) {
+            cameraSource.setMachineLearningFrameProcessor(new FaceDetectionProcessor(this));
+        } else if (model.equals("IMAGE_CLASSIFICATION")) {
+            cameraSource.setMachineLearningFrameProcessor(new ImageLabelingProcessor(this));
+        }
+
     }
 
     private void startCameraSource() {
@@ -192,6 +252,69 @@ public class MainView extends AppCompatActivity {
             }
         }
     }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume");
+        startCameraSource();
+    }
+
+    /**
+     * Stops the camera.
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        preview.stop();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (cameraSource != null) {
+            cameraSource.release();
+        }
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+
+    private void hide() {
+        // Hide UI first
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
+        //mControlsView.setVisibility(View.GONE);
+        mVisible = false;
+
+        // Schedule a runnable to remove the status and navigation bar after a delay
+        //mHideHandler.removeCallbacks(mShowPart2Runnable);
+        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
+    }
+
+
+    /**
+     * Schedules a call to hide() in delay milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+
+    /* PERMISSION DETAILS ARE FROM HERE ON */
 
     private boolean allPermissionsGranted() {
         for (String permission : getRequiredPermissions()) {
@@ -247,44 +370,16 @@ public class MainView extends AppCompatActivity {
             int requestCode, String[] permissions, int[] grantResults) {
         Log.i(TAG, "Permission granted!");
         if (allPermissionsGranted()) {
-            createCameraSource("FACE_DETECTION");
+            createCameraSource(model);
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    /*PERMISSION DETAILS END HERE*/
+}
 
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
-    }
-
-    /*private void toggle() {
-        if (mVisible) {
-            hide();
-        } else {
-            show();
-        }
-    }*/
-
-    private void hide() {
-        // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }
-        //mControlsView.setVisibility(View.GONE);
-        mVisible = false;
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    @SuppressLint("InlinedApi")
+/*COMMENTED OUT CODE DUMP */
+/*@SuppressLint("InlinedApi")
     private void show() {
         // Show the system bar
         mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
@@ -294,14 +389,23 @@ public class MainView extends AppCompatActivity {
         // Schedule a runnable to display UI elements after a delay
         mHideHandler.removeCallbacks(mHidePart2Runnable);
         mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    /**
-     * Schedules a call to hide() in delay milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }
-}
+    }*/
+ /*private void toggle() {
+        if (mVisible) {
+            hide();
+        } else {
+            show();
+        }
+    }*/
+/*private final Runnable mShowPart2Runnable = new Runnable() {
+        @Override
+        public void run() {
+            // Delayed display of UI elements
+            ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.show();
+            }
+            mContentView.setVisibility(View.VISIBLE);
+            //mControlsView.setVisibility(View.VISIBLE);
+        }
+    };*/

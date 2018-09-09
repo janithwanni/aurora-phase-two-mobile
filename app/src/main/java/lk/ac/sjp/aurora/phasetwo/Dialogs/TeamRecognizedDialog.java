@@ -7,10 +7,9 @@ import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 
-import lk.ac.sjp.aurora.phasetwo.PostDetectorView;
+import lk.ac.sjp.aurora.phasetwo.StateManager;
 
 public class TeamRecognizedDialog extends DialogFragment {
     private String message;
@@ -40,16 +39,21 @@ public class TeamRecognizedDialog extends DialogFragment {
         builder.setMessage(message)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        Intent intent = new Intent(activity, PostDetectorView.class);
+                        /*Intent intent = new Intent(activity, PostDetectorView.class);
                         intent.putExtra("lk.ac.sjp.aurora.TEAM_NAME", "Team A");
-                        startActivity(intent);
+                        startActivity(intent);*/
+                        StateManager.setRegisteredTeam("TEAM A");
+                        activity.recreate();
+
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        Intent intent = new Intent(activity, PostDetectorView.class);
+                        /*Intent intent = new Intent(activity, PostDetectorView.class);
                         intent.putExtra("lk.ac.sjp.aurora.TEAM_NAME", "Team B");
-                        startActivity(intent);
+                        startActivity(intent);*/
+                        StateManager.setRegisteredTeam("TEAM B");
+                        activity.recreate();
                     }
                 });
         // Create the AlertDialog object and return it
